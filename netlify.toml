@@ -1,0 +1,31 @@
+# Netlify configuration for static site
+[build]
+  publish = "."
+  command = ""
+  functions = "netlify/functions"
+
+[dev]
+  framework = "#static"
+  autoLaunch = false
+
+# Basic security + caching headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Pretty share URL -> Function with OG tags
+[[redirects]]
+  from = "/s/*"
+  to = "/.netlify/functions/share/:splat"
+  status = 200
+  force = true
+
+# Ensure success page isn't cached aggressively while iterating
+[[headers]]
+  for = "/success.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

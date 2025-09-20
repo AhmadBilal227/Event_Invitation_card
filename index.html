@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inside the Minds — Event Registration</title>
+    <meta name="description" content="Register for Inside the Minds: AI + Design — Past, present and future." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=7" />
+  </head>
+  <body class="form-body">
+    <div class="aurora-bg" aria-hidden="true">
+      <span class="aurora-layer aurora-1"></span>
+      <span class="aurora-layer aurora-2"></span>
+      <span class="aurora-layer aurora-3"></span>
+    </div>
+    <main class="page">
+      <section class="hero" aria-labelledby="register-title">
+        <div class="poster">
+          <img class="hero-image" src="./1757593146163.jpeg" alt="Event collage" />
+          <img class="brand-badge" src="./ntcepk_logo.jpeg" alt="NTCE — New Trends in Civil Engineering" />
+        </div>
+
+        <aside class="register-card" aria-labelledby="register-title">
+          <h2 id="register-title">Join NTCE 2025 — Register for Free</h2>
+          <p class="register-lede">16–18 December 2025 · University of Central Punjab, Lahore. Get your free entry pass till 31 Oct.</p>
+
+          <div id="error-summary" class="error-summary" role="alert" hidden>
+            <p>Please correct the highlighted fields.</p>
+          </div>
+
+          <form id="registration-form" novalidate>
+            <div class="form-grid">
+              <!-- Avatar upload at top -->
+              <div class="form-field avatar-field">
+                <label for="avatar" class="avatar-label">Your photo</label>
+                <div class="avatar-uploader">
+                  <img id="avatarPreview" alt="Your photo preview" />
+                </div>
+                <div class="avatar-controls">
+                  <button type="button" id="avatarUploadBtn" class="btn-tertiary">Upload</button>
+                  <button type="button" id="avatarChangeBtn" class="btn-tertiary" hidden>Change</button>
+                  <button type="button" id="avatarDeleteBtn" class="btn-tertiary danger" hidden>Delete</button>
+                </div>
+                <input id="avatar" name="avatar" type="file" accept="image/*" hidden />
+                <p class="help-text">Square image recommended. Max 5MB.</p>
+                <p class="error" id="avatar-error" role="alert"></p>
+              </div>
+              <div class="form-field">
+                <label for="fullName">Full name <span class="req" aria-hidden="true">*</span></label>
+                <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Your full name" required />
+                <p class="error" id="fullName-error" role="alert"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+                <p class="error" id="email-error" role="alert"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="phone">Mobile phone <span class="req" aria-hidden="true">*</span></label>
+                <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 555 123 4567" required />
+                <p class="error" id="phone-error" role="alert"></p>
+              </div>
+
+              <!-- Move LinkedIn below phone -->
+              <div class="form-field">
+                <label for="linkedin">LinkedIn URL</label>
+                <input id="linkedin" name="linkedin" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/username" />
+                <p class="error" id="linkedin-error" role="alert"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="org">Organization</label>
+                <input id="org" name="organization" type="text" autocomplete="organization" placeholder="Your organization (optional)" />
+                <p class="error" id="org-error" role="alert"></p>
+              </div>
+
+              <div class="form-field">
+                <fieldset class="choice-cards">
+                  <legend>Member category</legend>
+                  <div class="cards-grid">
+                    <input type="radio" id="cat-student" name="category" value="STUDENT" checked />
+                    <label class="choice-card" for="cat-student">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10l-10 5L2 10l10-5 10 5Z"/><path d="M6 12v5c0 1 2 2 6 2s6-1 6-2v-5"/></svg>
+                      </span>
+                      <span>Student</span>
+                    </label>
+
+                    <input type="radio" id="cat-organizer" name="category" value="ORGANIZER" />
+                    <label class="choice-card" for="cat-organizer">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18"/><path d="M3 12h18"/><path d="M3 17h18"/></svg>
+                      </span>
+                      <span>Organizer</span>
+                    </label>
+
+                    <input type="radio" id="cat-delegate" name="category" value="DELEGATE" />
+                    <label class="choice-card" for="cat-delegate">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.8-3.5 5.6-5 8-5s6.2 1.5 8 5"/></svg>
+                      </span>
+                      <span>Delegate</span>
+                    </label>
+
+                    <input type="radio" id="cat-guest" name="category" value="GUEST" />
+                    <label class="choice-card" for="cat-guest">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"/><path d="M16 13a4 4 0 1 0-4-4"/><path d="M2 21c1.2-3 4.1-5 6-5"/><path d="M22 21c-1.2-3-4.1-5-6-5"/></svg>
+                      </span>
+                      <span>Guest</span>
+                    </label>
+
+                    <input type="radio" id="cat-panelist" name="category" value="PANELIST" />
+                    <label class="choice-card" for="cat-panelist">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c1.2-3 4.1-5 6-5h8c1.9 0 4.8 2 6 5"/><path d="M12 13a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"/></svg>
+                      </span>
+                      <span>Panelist</span>
+                    </label>
+
+                    <input type="radio" id="cat-speaker" name="category" value="SPEAKER" />
+                    <label class="choice-card" for="cat-speaker">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><circle cx="18" cy="6" r="3"/><path d="M2 21h12"/><path d="M9 15v6"/></svg>
+                      </span>
+                      <span>Speaker</span>
+                    </label>
+
+                    <input type="radio" id="cat-exhibitor" name="category" value="EXHIBITOR" />
+                    <label class="choice-card" for="cat-exhibitor">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      </span>
+                      <span>Exhibitor</span>
+                    </label>
+
+                    <input type="radio" id="cat-sponsor" name="category" value="SPONSOR" />
+                    <label class="choice-card" for="cat-sponsor">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/></svg>
+                      </span>
+                      <span>Sponsor</span>
+                    </label>
+
+                    <input type="radio" id="cat-collaborator" name="category" value="COLLABORATOR" />
+                    <label class="choice-card" for="cat-collaborator">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"/><path d="M16 13a4 4 0 1 0-4-4"/><path d="M2 21c1.2-3 4.1-5 6-5"/><path d="M22 21c-1.2-3-4.1-5-6-5"/></svg>
+                      </span>
+                      <span>Collaborator</span>
+                    </label>
+
+                    <input type="radio" id="cat-media" name="category" value="MEDIA" />
+                    <label class="choice-card" for="cat-media">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2H10a2 2 0 0 0-2 2v2"/></svg>
+                      </span>
+                      <span>Media</span>
+                    </label>
+
+                    <input type="radio" id="cat-volunteer" name="category" value="VOLUNTEER" />
+                    <label class="choice-card" for="cat-volunteer">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V5a4 4 0 0 1 4-4h7"/></svg>
+                      </span>
+                      <span>Volunteer</span>
+                    </label>
+
+                    <input type="radio" id="cat-jury" name="category" value="JURY" />
+                    <label class="choice-card" for="cat-jury">
+                      <span class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h20"/><path d="M7 7v10"/><path d="M17 7v10"/><path d="M12 7v10"/><path d="M4 21h16"/></svg>
+                      </span>
+                      <span>Jury</span>
+                    </label>
+                  </div>
+                </fieldset>
+                <p class="error" id="category-error" role="alert"></p>
+              </div>
+
+              
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Submit</button>
+              </div>
+            </div>
+
+            <div id="form-success" class="form-success" role="status" aria-live="polite" hidden>
+              <h3>You're in!</h3>
+              <p>Thanks for registering. We've emailed you a confirmation and will share the livestream link closer to the date.</p>
+            </div>
+          </form>
+        </aside>
+      </section>
+
+      
+    </main>
+
+    <!-- Provide SUPABASE_ANON_KEY on window before loading the module -->
+    <script src="./config.js?v=1"></script>
+    <script type="module" src="./script.js?v=3"></script>
+  </body>
+</html>

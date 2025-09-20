@@ -1,0 +1,23 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Node / tooling (if added later)
+node_modules/
+dist/
+build/
+.cache/
+
+# Env / local config
+.env
+.env.*
+config.local.js
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local Netlify folder
+.netlify
