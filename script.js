@@ -1,5 +1,6 @@
 // Supabase client (ESM via CDN)
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { initParticles } from './particles.js?v=1';
 
 const SUPABASE_URL = 'https://kssqqrunttoblwfopdvj.supabase.co';
 // Prefer providing the anon key at runtime via: window.SUPABASE_ANON_KEY = '<anon-key>'
@@ -105,6 +106,25 @@ if (avatarUploader && avatarInput) {
     }
   });
 }
+
+// Initialize animated particles background (behind header + form)
+try {
+  const mount = document.getElementById('particlesHero');
+  if (mount) {
+    initParticles(mount, {
+      particleColors: ['#ffffff', '#ffffff'],
+      particleCount: 240,
+      particleSpread: 10,
+      speed: 0.18,
+      particleBaseSize: 140,
+      moveParticlesOnHover: true,
+      alphaParticles: true,
+      sizeRandomness: 0.6,
+      cameraDistance: 22,
+      disableRotation: false,
+    });
+  }
+} catch {}
 
 // Initial control state
 if (avatarInput && avatarInput.files && avatarInput.files.length > 0) {
