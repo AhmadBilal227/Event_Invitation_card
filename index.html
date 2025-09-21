@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=13" />
+    <link rel="stylesheet" href="./styles.css?v=14" />
   </head>
   <body class="form-body">
     <div class="aurora-bg" aria-hidden="true">
@@ -18,9 +18,13 @@
     </div>
     <main class="page">
       <section class="hero" aria-labelledby="register-title">
+        <!-- Event invite header bar -->
+        <div class="event-invite-header">
+          <h1 id="register-title" class="event-invite-title">Join NTCE 2025 — Register for Free</h1>
+          <p class="event-invite-sub">16–18 December 2025 · University of Central Punjab, Lahore. Free entry pass till 31 Oct.</p>
+        </div>
+
         <aside class="register-card" aria-labelledby="register-title">
-          <h2 id="register-title">Join NTCE 2025 — Register for Free</h2>
-          <p class="register-lede">16–18 December 2025 · University of Central Punjab, Lahore. Get your free entry pass till 31 Oct.</p>
 
           <div id="error-summary" class="error-summary" role="alert" hidden>
             <p>Please correct the highlighted fields.</p>
@@ -68,7 +72,7 @@
               <!-- Move LinkedIn below phone -->
               <div class="form-field">
                 <label for="linkedin">LinkedIn URL</label>
-                <input id="linkedin" name="linkedin" type="url" inputmode="url" placeholder="https://www.linkedin.com/in/username" />
+                <input id="linkedin" name="linkedin" type="text" inputmode="text" spellcheck="false" placeholder="Paste any link (optional)" />
                 <p class="error" id="linkedin-error" role="alert"></p>
               </div>
 
@@ -202,6 +206,6 @@
 
     <!-- Provide SUPABASE_ANON_KEY on window before loading the module -->
     <script src="./config.js?v=1"></script>
-    <script type="module" src="./script.js?v=3"></script>
+    <script type="module" src="./script.js?v=4"></script>
   </body>
 </html>

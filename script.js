@@ -211,9 +211,7 @@ function validateField(input) {
   }
 
   if (id === 'linkedin') {
-    if (!val) return setError(input, ''), true; // optional
-    const liOk = /^https?:\/\/(www\.)?linkedin\.com\/(in|company)\/[A-Za-z0-9\-_%]+\/?$/.test(val);
-    if (!liOk) return setError(input, 'Enter a valid LinkedIn profile or company URL.'), false;
+    // Make this a free-form optional field with no validation constraints
     return setError(input, ''), true;
   }
 
