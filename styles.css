@@ -137,7 +137,38 @@ body {
 .form-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
 
 /* Avatar uploader */
-.avatar-field { display: grid; justify-items: start; gap: 8px; }
+.avatar-field {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-auto-rows: min-content;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 6px;
+  grid-template-areas:
+    "label label"
+    "avatar controls"
+    "avatar help"
+    "error error";
+}
+.avatar-label { grid-column: 1 / -1; grid-area: label; }
+.avatar-uploader { grid-column: 1; grid-row: 2 / span 2; grid-area: avatar; }
+.avatar-controls {
+  grid-column: 2;
+  grid-row: 2;
+  grid-area: controls;
+  justify-self: start; 
+  display: grid; 
+  grid-auto-flow: column; 
+  grid-auto-columns: max-content; 
+  justify-content: start; 
+  justify-items: start; 
+  align-items: center;
+  gap: 8px;
+  width: max-content; 
+}
+.avatar-controls .btn-tertiary { width: auto; }
+.help-text { grid-column: 2; grid-row: 3; grid-area: help; }
+.error#avatar-error { grid-column: 1 / -1; grid-row: 4; grid-area: error; }
 .avatar-label { font-weight: 700; color: var(--ink-700); }
 .avatar-uploader {
   position: relative;
@@ -286,9 +317,25 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
   .poster { min-height: 420px; }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 768px) {
   .title { font-size: clamp(34px, 9.6vw, 56px); }
   .subtitle { font-size: 18px; }
+  /* Stack avatar pieces on very small screens */
+  .avatar-field { 
+    grid-template-columns: 1fr; 
+    grid-template-areas:
+      "label"
+      "avatar"
+      "controls"
+      "help"
+      "error";
+  }
+  .avatar-uploader { grid-column: 1; grid-row: auto; grid-area: avatar; }
+  .avatar-controls { grid-column: 1; grid-area: controls; width: 100%; grid-auto-flow: column; justify-content: start; }
+  .help-text { grid-column: 1; grid-area: help; }
+  .error#avatar-error { grid-column: 1; grid-area: error; }
+  /* Hide header banner image to bring form up */
+  .event-hero-banner { display: none; }
 }
 
 /****************

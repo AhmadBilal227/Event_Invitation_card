@@ -128,11 +128,10 @@ avatarDeleteBtn?.addEventListener('click', () => {
 if (avatarInput && avatarPreview) {
   avatarInput.addEventListener('change', () => {
     const file = avatarInput.files && avatarInput.files[0];
-    if (!file) { avatarPreview.setAttribute('src', AVATAR_PLACEHOLDER); setAvatarControls('empty'); return; }
+    // If user cancels the dialog, do NOT reset existing preview
+    if (!file) return;
     if (!/^image\//.test(file.type)) {
       setError(avatarInput, 'Please upload a valid image file.');
-      avatarPreview.setAttribute('src', AVATAR_PLACEHOLDER);
-      setAvatarControls('empty');
       return;
     }
     const fr = new FileReader();
