@@ -156,6 +156,30 @@ function setError(input, message) {
   }
 }
 
+// Detect Postgres duplicate key (unique constraint) errors returned by Supabase
+function isDuplicateError(err) {
+  if (!err) return false;
+  const msg = `${err.message || ''} ${err.details || ''} ${err.hint || ''}`.toLowerCase();
+  // 23505 is the standard Postgres code for unique violation
+  if (err.code === '23505') return true;
+  // Fallback: look for common phrases/index names
+  if (msg.includes('duplicate key') || msg.includes('already exists')) return true;
+  if (msg.includes('registrations_email_norm_key') || msg.includes('email_norm')) return true;
+  return false;
+}
+
+function showEmailDuplicateError() {
+  const emailInput = qs('#email');
+  if (emailInput) {
+    setError(emailInput, 'This email is already registered for NTCE 2025.');
+    try { emailInput.focus(); } catch {}
+  }
+  if (errorSummary) {
+    errorSummary.hidden = false;
+    errorSummary.innerHTML = '<p>This email is already registered for NTCE 2025.</p>';
+  }
+}
+
 // Validate an individual field and set its error message. Returns true if valid.
 function validateField(input) {
   if (!input) return true;
@@ -249,9 +273,10 @@ async function handleSubmit(e) {
     errorSummary.innerHTML = '<p>Could not upload your photo. Please try a smaller image or different format.</p>';
     return;
   }
+  const emailVal = String(fd.get('email') || '').trim();
   const payload = {
     full_name: fd.get('fullName') || null,
-    email: fd.get('email') || null,
+    email: emailVal || null,
     phone: fd.get('phone') || null,
     organization: fd.get('organization') || null,
     category: fd.get('category') || null,
@@ -282,8 +307,12 @@ async function handleSubmit(e) {
 
   if (error) {
     console.warn('Supabase insert error:', error);
-    errorSummary.hidden = false;
-    errorSummary.innerHTML = '<p>Could not save your registration to the server. Please check your connection and try again.</p>';
+    if (isDuplicateError(error)) {
+      showEmailDuplicateError();
+    } else {
+      errorSummary.hidden = false;
+      errorSummary.innerHTML = '<p>Could not save your registration to the server. Please check your connection and try again.</p>';
+    }
     return;
   }
 

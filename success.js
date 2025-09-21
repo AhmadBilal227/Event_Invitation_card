@@ -45,6 +45,16 @@ function trace(msg, data) {
     console.log('[share]', msg, data || '');
   } catch {}
 }
+
+// Detect if a share failure was user cancel/abort
+function isUserAbortError(e) {
+  try {
+    if (!e) return false;
+    if (e.name === 'AbortError' || e.name === 'NotAllowedError') return true;
+    const msg = String(e.message || e.toString() || '').toLowerCase();
+    return msg.includes('abort') || msg.includes('cancel');
+  } catch { return false; }
+}
 function showDebugPanel(info = {}) {
   if (!DEBUG) return;
   const pre = document.createElement('pre');
@@ -59,6 +69,27 @@ function showDebugPanel(info = {}) {
   };
   pre.textContent = 'DEBUG ENV\n' + JSON.stringify({ ...env, ...info }, null, 2) + '\n\nTRACE\n' + JSON.stringify(window.SHARE_TRACE || [], null, 2);
   document.body.appendChild(pre);
+}
+
+// Simple non-blocking toast
+function showToast(msg, duration = 2500) {
+  try {
+    let el = document.getElementById('ntce-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ntce-toast';
+      el.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(24,35,46,0.92);color:#eaf3fb;padding:10px 14px;border-radius:10px;font-size:14px;z-index:9999;box-shadow:0 10px 24px rgba(0,0,0,0.35);opacity:0;transition:opacity .18s ease;';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => { try { el.remove(); } catch {} }, 220);
+      }, duration);
+    });
+  } catch {}
 }
 
 // success.js — Invitation card success page
@@ -95,6 +126,29 @@ function waitForImages(node, timeout = 2000) {
 }
 
 let CACHED_SHARE_FILE = null; // File object for quick mobile share
+let CACHED_PUBLIC_SHARE = null; // { publicUrl, fileName }
+let __PUBLIC_SHARE_INFLIGHT = null;
+
+async function ensurePublicShareFromDataUrl(dataUrl) {
+  try {
+    if (CACHED_PUBLIC_SHARE) return CACHED_PUBLIC_SHARE;
+    if (__PUBLIC_SHARE_INFLIGHT) return await __PUBLIC_SHARE_INFLIGHT;
+    __PUBLIC_SHARE_INFLIGHT = (async () => {
+      try {
+        const blob = await dataUrlToBlob(dataUrl);
+        const up = await uploadCardPng(blob);
+        CACHED_PUBLIC_SHARE = up; // { publicUrl, fileName }
+        return up;
+      } catch (e) {
+        console.warn('Pre-upload share URL failed', e);
+        return null;
+      } finally {
+        __PUBLIC_SHARE_INFLIGHT = null;
+      }
+    })();
+    return await __PUBLIC_SHARE_INFLIGHT;
+  } catch { return null; }
+}
 // Render the DOM card to a PNG and swap the stage into image mode
 async function renderCardImage() {
   const node = document.getElementById('inviteCard');
@@ -121,6 +175,8 @@ async function renderCardImage() {
       const blob = await dataUrlToBlob(dataUrl);
       CACHED_SHARE_FILE = new File([blob], 'ntce-invitation.png', { type: 'image/png' });
     } catch {}
+    // Also kick off a background upload to get a public URL for text+link share
+    try { ensurePublicShareFromDataUrl(dataUrl); } catch {}
   } catch (e) {
     console.warn('renderCardImage failed', e);
   }
@@ -164,13 +220,7 @@ function linkedinShareUrl(sharePageUrl) {
 }
 
 function buildCaption(fullName, organization) {
-  const parts = [
-    `Join me at ${EVENT.title}`,
-    `${EVENT.dateRange} — ${EVENT.venue}`,
-    `${EVENT.hashtag}`,
-    `${fullName}${organization ? ' · ' + organization : ''}`,
-  ];
-  return parts.join('\n');
+  return `#ntce2025\n\nThe most prestigious construction event of Pakistan is scheduled this December 16 -18, 2025. The registration is free till October 31 \n\nRegister & share on LinkedIn and get eligible for a Samsung S25 mobile draw\n\nRegistration Link\nhttps://ntcepk-event-2025-form.netlify.app/`;
 }
 
 const PRODUCTION_ORIGIN = 'https://ntcepk-event-2025-form.netlify.app';
@@ -276,6 +326,11 @@ function buildICS() {
 }
 
 // Dynamically scale the card-root to fit the stage width when not in image-mode
+let __fitRaf = null;
+function scheduleFit() {
+  if (__fitRaf) cancelAnimationFrame(__fitRaf);
+  __fitRaf = requestAnimationFrame(fitCardToWidth);
+}
 function fitCardToWidth() {
   try {
     const stage = document.querySelector('.card-stage');
@@ -287,7 +342,12 @@ function fitCardToWidth() {
     const cs = getComputedStyle(stage);
     const pad = parseFloat(cs.paddingLeft || '0') + parseFloat(cs.paddingRight || '0');
     const guard = 8; // prevent subpixel overflow on tiny screens
-    const available = Math.max(0, stage.clientWidth - pad - guard);
+    const rect = stage.getBoundingClientRect();
+    let available = Math.max(0, rect.width - pad - guard);
+    if (available <= 0) { // stage not laid out yet, retry next frame
+      scheduleFit();
+      return;
+    }
     const scale = Math.min(1, available / 1200);
     const w = Math.round(1200 * scale);
     const hScaled = Math.round(627 * scale);
@@ -405,6 +465,8 @@ function render() {
     // Render once as an image for stable layout
     renderCardImage();
     fitCardToWidth();
+    setTimeout(fitCardToWidth, 0);
+    setTimeout(fitCardToWidth, 250);
     trace('renderCardImage-called');
 
     // Actions
@@ -503,39 +565,48 @@ function render() {
       }
     });
 
+    // Share: prefer image file on mobile; otherwise share caption+URL via native share; desktop opens LinkedIn web share
     shareBtn?.addEventListener('click', async () => {
       const node = document.getElementById('inviteCard');
+      if (!node) { alert('Card not ready yet. Please wait a moment and try again.'); return; }
 
-      // Attempt direct image share on mobile immediately using precomputed file
       const reg = getRegistration();
       const fullName = reg.fullName || reg['fullName'] || '';
       const organization = reg.organization || reg['organization'] || '';
       const caption = buildCaption(fullName, organization);
-      const uaMobile = navigator.userAgent || '';
-      const isMobileEnv = /Android|iPhone|iPad|iPod/i.test(uaMobile);
-      trace('share-click', { isMobileEnv, hasShare: !!navigator.share, hasCached: !!CACHED_SHARE_FILE });
-      if (isMobileEnv && navigator.share && CACHED_SHARE_FILE) {
+      const ua = navigator.userAgent || '';
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+
+      // 0) Try cached image file share immediately
+      if (isMobile && navigator.share && CACHED_SHARE_FILE) {
         try {
           const supportsFiles = (typeof navigator.canShare === 'function') ? navigator.canShare({ files: [CACHED_SHARE_FILE] }) : true;
           if (supportsFiles) {
             try { await navigator.clipboard.writeText(caption); } catch {}
             await navigator.share({ files: [CACHED_SHARE_FILE], text: caption, title: EVENT.title });
-            trace('os-share-cached-file-success');
             return;
-          } else {
-            try { await navigator.clipboard.writeText(caption); } catch {}
-            try { await navigator.share({ files: [CACHED_SHARE_FILE], text: caption, title: EVENT.title }); trace('os-share-cached-file-forced'); return; } catch {}
           }
-        } catch {}
+        } catch (e) { if (isUserAbortError(e)) return; }
       }
 
-      // 1) Prepare an image blob (fallback path or if cached file not ready)
+      // 0.5) If a public share URL is ready, use native share with caption + URL immediately
+      if (isMobile && navigator.share && CACHED_PUBLIC_SHARE && CACHED_PUBLIC_SHARE.publicUrl) {
+        try {
+          const title = 'NTCE 2025 Invitation';
+          const sharePageUrl = shortShareUrl(CACHED_PUBLIC_SHARE.fileName, CACHED_PUBLIC_SHARE.publicUrl, title, caption);
+          try { await navigator.clipboard.writeText(`${caption}\n${sharePageUrl}`); } catch {}
+          await navigator.share({ title: EVENT.title, text: `${caption}\n${sharePageUrl}` });
+          return;
+        } catch (e) { if (isUserAbortError(e)) return; }
+      }
+
+      // 1) Prepare an image blob
       const hti = await getHtmlToImage();
       if (!hti || typeof hti.toPng !== 'function') { alert('Image library not loaded.'); return; }
       let blob;
-      const imgEl = document.getElementById('cardImage');
-      if (imgEl && imgEl.src) {
-        blob = await dataUrlToBlob(imgEl.src);
+      const imgEl2 = document.getElementById('cardImage');
+      if (imgEl2 && imgEl2.src) {
+        blob = await dataUrlToBlob(imgEl2.src);
       } else if (typeof hti.toBlob === 'function') {
         blob = await hti.toBlob(node, { pixelRatio: 2, cacheBust: true, width: 1200, height: 627 });
       } else {
@@ -543,23 +614,20 @@ function render() {
         blob = await dataUrlToBlob(dataUrl);
       }
 
-      if (isMobileEnv && navigator.share) {
+      // 2) Try file share with fresh file
+      if (isMobile && navigator.share) {
         try {
           const file = new File([blob], 'ntce-invitation.png', { type: 'image/png' });
           const supportsFiles = (typeof navigator.canShare === 'function') ? navigator.canShare({ files: [file] }) : true;
           if (supportsFiles) {
             try { await navigator.clipboard.writeText(caption); } catch {}
-            try { await navigator.share({ files: [file], text: caption, title: EVENT.title }); } catch (e) { if (e && e.name === 'AbortError') return; throw e; }
-            trace('os-share-new-file-success');
-            return; // success or user canceled
-          } else {
-            try { await navigator.clipboard.writeText(caption); } catch {}
-            try { await navigator.share({ files: [file], text: caption, title: EVENT.title }); trace('os-share-new-file-forced'); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+            await navigator.share({ files: [file], text: caption, title: EVENT.title });
+            return;
           }
-        } catch {}
+        } catch (e) { if (isUserAbortError(e)) return; }
       }
 
-      // 2) Upload to public Supabase bucket 'cards'
+      // 3) Upload image and create share URL
       let publicImageUrl = '';
       let cardFileName = '';
       try {
@@ -572,29 +640,48 @@ function render() {
         return;
       }
 
-      // 3) Build a share landing page URL (server-rendered OG tags)
       const title = 'NTCE 2025 Invitation';
       const sharePageUrl = shortShareUrl(cardFileName, publicImageUrl, title, caption);
 
-      // 4) Device-adaptive share
-      const ua = navigator.userAgent || '';
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+      // 4) Mobile: native share with caption+URL; if unavailable copy+alert
       if (isMobile) {
-        // Prefer opening the LinkedIn app directly on mobile
-        trace('deeplink-to-app');
-        tryOpenLinkedInApp(sharePageUrl);
-        return;
+        if (navigator.share) {
+          try {
+            try { await navigator.clipboard.writeText(`${caption}\n${sharePageUrl}`); } catch {}
+            await navigator.share({ title: EVENT.title, text: `${caption}\n${sharePageUrl}` });
+            return;
+          } catch (e) {
+            if (isUserAbortError(e)) return; // user canceled
+            try { await navigator.clipboard.writeText(`${caption}\n${sharePageUrl}`); } catch {}
+            showToast('Caption and link copied. Opening LinkedIn…');
+            window.open(linkedinShareUrl(sharePageUrl), '_blank');
+            return;
+          }
+        } else {
+          try { await navigator.clipboard.writeText(`${caption}\n${sharePageUrl}`); } catch {}
+          showToast('Caption and link copied. Opening LinkedIn…');
+          window.open(linkedinShareUrl(sharePageUrl), '_blank');
+          return;
+        }
       }
+
+      // 5) Desktop: open LinkedIn web share
       try { await navigator.clipboard.writeText(caption); } catch {}
-      trace('open-web-share');
       window.open(linkedinShareUrl(sharePageUrl), '_blank');
     });
 
     // no preview share button; "View more" controls removed
 
     // Resize handlers
-    window.addEventListener('resize', fitCardToWidth);
-    window.addEventListener('orientationchange', fitCardToWidth);
+    window.addEventListener('resize', scheduleFit);
+    window.addEventListener('orientationchange', scheduleFit);
+    if (window.ResizeObserver) {
+      try {
+        const ro = new ResizeObserver(() => scheduleFit());
+        const stageEl = document.querySelector('.card-stage');
+        if (stageEl) ro.observe(stageEl);
+      } catch {}
+    }
   } catch (err) {
     console.error('Render failed, falling back to non-React path', err);
     const reg = getRegistration();
@@ -727,3 +814,10 @@ function ensureReact(cb) {
 }
 
 ensureReact(render);
+// Ensure initial fit on mobile when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  scheduleFit();
+});
+window.addEventListener('load', () => {
+  fitCardToWidth();
+});

@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=7" />
+    <link rel="stylesheet" href="./styles.css?v=13" />
   </head>
   <body class="form-body">
     <div class="aurora-bg" aria-hidden="true">
@@ -18,11 +18,6 @@
     </div>
     <main class="page">
       <section class="hero" aria-labelledby="register-title">
-        <div class="poster">
-          <img class="hero-image" src="./1757593146163.jpeg" alt="Event collage" />
-          <img class="brand-badge" src="./ntcepk_logo.jpeg" alt="NTCE — New Trends in Civil Engineering" />
-        </div>
-
         <aside class="register-card" aria-labelledby="register-title">
           <h2 id="register-title">Join NTCE 2025 — Register for Free</h2>
           <p class="register-lede">16–18 December 2025 · University of Central Punjab, Lahore. Get your free entry pass till 31 Oct.</p>
@@ -33,6 +28,10 @@
 
           <form id="registration-form" novalidate>
             <div class="form-grid">
+              <!-- Landscape banner moved from left poster -->
+              <div class="form-hero-banner">
+                <img class="form-hero-img" src="./1757593146163.jpeg" alt="Event collage" />
+              </div>
               <!-- Avatar upload at top -->
               <div class="form-field avatar-field">
                 <label for="avatar" class="avatar-label">Your photo</label>
@@ -74,7 +73,7 @@
               </div>
 
               <div class="form-field">
-                <label for="org">Organization</label>
+                <label for="org">Organization/ Institute</label>
                 <input id="org" name="organization" type="text" autocomplete="organization" placeholder="Your organization (optional)" />
                 <p class="error" id="org-error" role="alert"></p>
               </div>
