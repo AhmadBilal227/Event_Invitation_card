@@ -7,8 +7,8 @@
     <meta name="description" content="Register for Inside the Minds: AI + Design — Past, present and future." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=14" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=15" />
   </head>
   <body class="form-body">
     <div class="aurora-bg" aria-hidden="true">
@@ -22,6 +22,9 @@
         <div class="event-invite-header">
           <h1 id="register-title" class="event-invite-title">Join NTCE 2025 — Register for Free</h1>
           <p class="event-invite-sub">16–18 December 2025 · University of Central Punjab, Lahore. Free entry pass till 31 Oct.</p>
+          <div class="event-hero-banner">
+            <img class="event-hero-img" src="./1757593146163.jpeg" alt="Event collage" />
+          </div>
         </div>
 
         <aside class="register-card" aria-labelledby="register-title">
@@ -32,10 +35,7 @@
 
           <form id="registration-form" novalidate>
             <div class="form-grid">
-              <!-- Landscape banner moved from left poster -->
-              <div class="form-hero-banner">
-                <img class="form-hero-img" src="./1757593146163.jpeg" alt="Event collage" />
-              </div>
+              <!-- Banner moved to header above -->
               <!-- Avatar upload at top -->
               <div class="form-field avatar-field">
                 <label for="avatar" class="avatar-label">Your photo</label>
@@ -71,7 +71,7 @@
 
               <!-- Move LinkedIn below phone -->
               <div class="form-field">
-                <label for="linkedin">LinkedIn URL</label>
+                <label for="linkedin">LinkedIn/Website</label>
                 <input id="linkedin" name="linkedin" type="text" inputmode="text" spellcheck="false" placeholder="Paste any link (optional)" />
                 <p class="error" id="linkedin-error" role="alert"></p>
               </div>
