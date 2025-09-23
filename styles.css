@@ -244,6 +244,16 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .btn-primary:active { transform: translateY(0); }
 .btn-primary:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand-primary) 40%, transparent); outline-offset: 2px; }
 
+/* Preview mode button styles */
+.btn-primary.preview-mode {
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  box-shadow: 0 10px 24px rgba(74, 222, 128, 0.35);
+}
+.btn-primary.preview-mode:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(74, 222, 128, 0.45);
+}
+
 /* Reactbits StarBorder – CSS-only emulation */
 .star-border-container {
   --star-color: #ff2dbf; /* magenta */

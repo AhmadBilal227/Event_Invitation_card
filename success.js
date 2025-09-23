@@ -92,6 +92,102 @@ function showToast(msg, duration = 2500) {
   } catch {}
 }
 
+// Success UI with checkmark animation
+function showSuccessUI(msg, duration = 3500) {
+  console.log('[Success UI] Showing success message:', msg);
+  try {
+    let el = document.getElementById('ntce-success');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ntce-success';
+      el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(24,35,46,0.95);color:#eaf3fb;padding:24px 32px;border-radius:16px;font-size:16px;z-index:10000;box-shadow:0 20px 48px rgba(0,0,0,0.45);opacity:0;transition:all .3s ease;text-align:center;backdrop-filter:blur(8px);';
+      
+      // Create checkmark SVG
+      const checkmark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      checkmark.setAttribute('width', '48');
+      checkmark.setAttribute('height', '48');
+      checkmark.setAttribute('viewBox', '0 0 48 48');
+      checkmark.style.cssText = 'margin:0 auto 16px;display:block;';
+      
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', '24');
+      circle.setAttribute('cy', '24');
+      circle.setAttribute('r', '22');
+      circle.setAttribute('stroke', '#4ade80');
+      circle.setAttribute('stroke-width', '2');
+      circle.setAttribute('fill', 'none');
+      
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M14 24l7 7 13-13');
+      path.setAttribute('stroke', '#4ade80');
+      path.setAttribute('stroke-width', '3');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.style.cssText = 'stroke-dasharray: 33; stroke-dashoffset: 33; animation: checkmark 0.6s ease-out forwards 0.3s;';
+      
+      checkmark.appendChild(circle);
+      checkmark.appendChild(path);
+      el.appendChild(checkmark);
+      
+      const message = document.createElement('div');
+      message.textContent = msg;
+      message.style.cssText = 'font-weight:500;';
+      el.appendChild(message);
+      
+      // Add animation styles
+      const style = document.createElement('style');
+      style.textContent = '@keyframes checkmark { to { stroke-dashoffset: 0; } }';
+      document.head.appendChild(style);
+      
+      document.body.appendChild(el);
+    }
+    
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translate(-50%,-50%) scale(1.05)';
+      setTimeout(() => {
+        el.style.transform = 'translate(-50%,-50%) scale(1)';
+      }, 200);
+      
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translate(-50%,-50%) scale(0.9)';
+        setTimeout(() => { try { el.remove(); } catch {} }, 350);
+      }, duration);
+    });
+  } catch {}
+}
+
+// Update share button to preview mode
+function updateShareButtonToPreview(postUrl) {
+  console.log('[Button Update] Updating share button to preview mode with URL:', postUrl);
+  const shareBtn = document.getElementById('shareBtn');
+  if (!shareBtn) {
+    console.error('[Button Update] Share button not found!');
+    return;
+  }
+  
+  // Update button text
+  const desktopText = shareBtn.querySelector('.desktop-text');
+  const mobileText = shareBtn.querySelector('.mobile-text');
+  
+  if (desktopText) desktopText.textContent = 'View LinkedIn Post';
+  if (mobileText) mobileText.textContent = 'View Post';
+  
+  // Update button style to indicate it's a preview button
+  shareBtn.classList.add('preview-mode');
+  
+  // Remove old event listeners by cloning the button
+  const newShareBtn = shareBtn.cloneNode(true);
+  shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
+  
+  // Add new click handler for preview
+  newShareBtn.addEventListener('click', () => {
+    window.open(postUrl, '_blank');
+  });
+}
+
 // success.js — Invitation card success page
 // Uses React (UMD globals) and html-to-image UMD to render and export a hi‑res PNG
 
@@ -475,6 +571,12 @@ function render() {
     const googleCal = document.getElementById('googleCal');
 
     googleCal.href = googleCalendarUrl(EVENT);
+    
+    // Check if we already have a LinkedIn post URL
+    const existingPostUrl = sessionStorage.getItem('LI_POST_URL');
+    if (existingPostUrl) {
+      updateShareButtonToPreview(existingPostUrl);
+    }
 
     // Attempt decrypt if we only have a signed URL (local registration)
     (async () => {
@@ -565,7 +667,7 @@ function render() {
       }
     });
 
-    // Share: prefer image file on mobile; otherwise share caption+URL via native share; desktop opens LinkedIn web share
+    // Share: LinkedIn OAuth one-click sharing with fallbacks
     shareBtn?.addEventListener('click', async () => {
       const node = document.getElementById('inviteCard');
       if (!node) { alert('Card not ready yet. Please wait a moment and try again.'); return; }
@@ -576,6 +678,119 @@ function render() {
       const caption = buildCaption(fullName, organization);
       const ua = navigator.userAgent || '';
       const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+
+      // Check LinkedIn authentication status
+      console.log('[LinkedIn] Checking auth status...');
+      try {
+        const statusResponse = await fetch('/.netlify/functions/linkedin-status', {
+          credentials: 'include'
+        });
+        
+        console.log('[LinkedIn] Status response:', statusResponse.status);
+        
+        if (statusResponse.ok) {
+          const status = await statusResponse.json();
+          console.log('[LinkedIn] Auth status:', status);
+          console.log('[LinkedIn] Full status response:', JSON.stringify(status, null, 2));
+          
+          if (!status.signedIn) {
+            // Store intent for auto-post after OAuth
+            sessionStorage.setItem('LI_AUTOPOST', 'true');
+            sessionStorage.setItem('LI_CAPTION', caption);
+            
+            // Redirect to LinkedIn OAuth
+            window.location.href = '/.netlify/functions/linkedin-auth?return=' + 
+              encodeURIComponent(window.location.href);
+            return;
+          }
+          
+          // User is authenticated - post via API
+          try {
+            // Show loading state
+            if (shareBtn) {
+              shareBtn.disabled = true;
+              const desktopText = shareBtn.querySelector('.desktop-text');
+              const mobileText = shareBtn.querySelector('.mobile-text');
+              if (desktopText) desktopText.textContent = 'Sharing...';
+              if (mobileText) mobileText.textContent = 'Sharing...';
+              // If no span elements, update the button directly
+              if (!desktopText && !mobileText) {
+                shareBtn.textContent = 'Sharing...';
+              }
+            }
+            
+            // Get image as base64
+            let imageB64;
+            const imgEl = document.getElementById('cardImage');
+            if (imgEl && imgEl.src && imgEl.src.startsWith('data:')) {
+              // Extract base64 from data URL
+              imageB64 = imgEl.src.split(',')[1];
+            } else {
+              // Generate image
+              const hti = await getHtmlToImage();
+              if (!hti || typeof hti.toPng !== 'function') throw new Error('Image library not loaded');
+              const dataUrl = await hti.toPng(node, { pixelRatio: 2, cacheBust: true, width: 1200, height: 627 });
+              imageB64 = dataUrl.split(',')[1];
+            }
+            
+            // Post to LinkedIn via API
+            const postResponse = await fetch('/.netlify/functions/linkedin-post', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                caption: caption,
+                imageB64: imageB64,
+                mimeType: 'image/png'
+              })
+            });
+            
+            const result = await postResponse.json();
+            console.log('[LinkedIn] Post response:', postResponse.status, result);
+            
+            if (postResponse.ok && result.postUrl) {
+              // Store post URL for preview functionality
+              sessionStorage.setItem('LI_POST_URL', result.postUrl);
+              
+              // Show success UI
+              showSuccessUI('Successfully shared on LinkedIn!');
+              
+              // Update button to preview mode
+              updateShareButtonToPreview(result.postUrl);
+              
+              // Open the post in a new tab
+              window.open(result.postUrl, '_blank');
+            } else if (postResponse.status === 401) {
+              // Token expired - clear and retry
+              sessionStorage.setItem('LI_AUTOPOST', 'true');
+              sessionStorage.setItem('LI_CAPTION', caption);
+              window.location.href = '/.netlify/functions/linkedin-auth?return=' + 
+                encodeURIComponent(window.location.href);
+            } else {
+              throw new Error(result.error || 'Failed to post');
+            }
+          } catch (error) {
+            console.error('LinkedIn post error:', error);
+            showToast('Could not post to LinkedIn. Using fallback share...');
+            
+            // Reset button state on error
+            if (shareBtn) {
+              shareBtn.disabled = false;
+              const desktopText = shareBtn.querySelector('.desktop-text');
+              const mobileText = shareBtn.querySelector('.mobile-text');
+              if (desktopText) desktopText.textContent = 'Share on LinkedIn';
+              if (mobileText) mobileText.textContent = 'Share';
+            }
+            
+            // Continue with fallback share methods below
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('[LinkedIn] Status check failed:', error);
+        showToast('LinkedIn feature unavailable. Using fallback share...');
+        // Continue with fallback methods
+      }
 
       // 0) Try cached image file share immediately
       if (isMobile && navigator.share && CACHED_SHARE_FILE) {
@@ -817,7 +1032,50 @@ ensureReact(render);
 // Ensure initial fit on mobile when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   scheduleFit();
+  
+  // Check for LinkedIn auto-post after OAuth callback
+  checkLinkedInAutoPost();
 });
 window.addEventListener('load', () => {
   fitCardToWidth();
 });
+
+// Check if we need to auto-post after LinkedIn OAuth
+async function checkLinkedInAutoPost() {
+  // Check for OAuth errors
+  const params = new URLSearchParams(window.location.search);
+  const linkedinError = params.get('linkedin_error');
+  if (linkedinError) {
+    console.error('LinkedIn OAuth error:', linkedinError);
+    if (linkedinError === 'oauth_denied') {
+      showToast('LinkedIn authorization was cancelled');
+    } else {
+      showToast('LinkedIn login failed. Please try again.');
+    }
+    // Clean up URL
+    params.delete('linkedin_error');
+    const newSearch = params.toString();
+    const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+    window.history.replaceState({}, '', newUrl);
+    return;
+  }
+  
+  // Check if we need to auto-post
+  const shouldAutoPost = sessionStorage.getItem('LI_AUTOPOST');
+  const savedCaption = sessionStorage.getItem('LI_CAPTION');
+  
+  if (shouldAutoPost === 'true') {
+    // Clear flags immediately to prevent loops
+    sessionStorage.removeItem('LI_AUTOPOST');
+    sessionStorage.removeItem('LI_CAPTION');
+    
+    // Wait for card to be ready
+    setTimeout(async () => {
+      const shareBtn = document.getElementById('shareBtn');
+      if (shareBtn && savedCaption) {
+        // Trigger the share with saved caption
+        shareBtn.click();
+      }
+    }, 1500); // Give time for card to render
+  }
+}
